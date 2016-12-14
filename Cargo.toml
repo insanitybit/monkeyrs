@@ -1,0 +1,8 @@
+[package]
+name = "monkeyrs"
+version = "0.1.0"
+authors = ["insanitybit <insanitybit@gmail.com>"]
+
+[dependencies]
+regex = "*"
+lazy_static = "*"
