@@ -48,7 +48,21 @@ impl<'a> Parser<'a> {
     pub fn parse_statement(&mut self) -> Node<'a> {
         match self.cur_token {
             Token::LET => self.parse_let_statement(),
+            Token::RETURN => self.parse_return_statement(),
             _ => panic!(),
+        }
+    }
+
+    pub fn parse_return_statement(&mut self) -> Node<'a> {
+        let init_token = self.cur_token.clone();
+
+        while self.cur_token != Token::SEMICOLON {
+            self.next_token();
+        }
+
+        Node::ReturnStatement {
+            token: init_token,
+            value: unimplemented!(),
         }
     }
 
