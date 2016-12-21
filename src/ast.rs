@@ -15,6 +15,19 @@ pub enum Node<'a> {
         token: Token<'a>,
         value: &'a str,
     },
+    Expression {
+        token: Token<'a>,
+        value: Box<Node<'a>>,
+    },
+    IntegerLiteral {
+        token: Token<'a>,
+        value: u64,
+    },
+    PrefixExpression {
+        token: Token<'a>,
+        operator: &'a str,
+        right: Box<Node<'a>>,
+    },
 }
 
 
@@ -23,7 +36,11 @@ impl<'a> Node<'a> {
         match *self {
             Node::LetStatement { token: ref t, .. } => t.clone(),
             Node::ReturnStatement { token: ref t, .. } => t.clone(),
-            _ => panic!("Expected a valid token"),
+            Node::Identifier { token: ref t, .. } => t.clone(),
+            Node::Expression { token: ref t, .. } => t.clone(),
+            Node::IntegerLiteral { token: ref t, .. } => t.clone(),
+            Node::PrefixExpression { token: ref t, .. } => t.clone(),
+            // _ => panic!("Expected a valid token"),
         }
     }
 }

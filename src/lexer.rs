@@ -30,7 +30,7 @@ impl<'a> Lexer<'a> {
     {
         self.skip_whitespace();
 
-        if self.read_position == self.input.len() {
+        if self.read_position > self.input.len() {
             return EOF;
         }
 
@@ -92,7 +92,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_char(&mut self) {
-        self.ch = self.input.chars().nth(self.read_position).unwrap();
+        if let Some(c) = self.input
+                             .chars()
+                             .nth(self.read_position) {
+            self.ch = c
+        };
         self.position = self.read_position;
         self.read_position += 1;
     }
@@ -143,7 +147,34 @@ mod tests {
     use super::*;
     use token::Token::*;
 
+
     #[test]
+    fn test_lex() {
+        let input = "let five = 5 + 2;";
+        let output = vec![Token::LET,
+                          Token::IDENT("five"),
+                          Token::ASSIGN,
+                          Token::INT(5),
+                          Token::PLUS,
+                          Token::INT(2),
+                          Token::SEMICOLON];
+
+
+        let mut lexer = Lexer::new(input);
+        let mut tokens = Vec::new();
+        loop {
+            let tok = lexer.next_token();
+            match tok {
+                ILLEGAL => panic!("Illegal token: {:#?}", tok),
+                EOF => break,
+                _ => tokens.push(tok),
+            }
+        }
+
+        assert_eq!(tokens, output);
+    }
+
+    // #[test]
     fn test_interpreter() {
         let input = "let five = 5;
         let ten = 10;

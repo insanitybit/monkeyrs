@@ -4,11 +4,25 @@ use ast::*;
 use lexer::Lexer;
 use token::Token;
 
+#[derive(Debug)]
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     cur_token: Token<'a>,
     peek_token: Token<'a>,
 }
+
+#[derive(Debug, Clone)]
+// Numbers must be > 0, but have no meaning other than ordering
+pub enum Precedence {
+    Lowest = 1,
+    Equals = 2,
+    LessGreater = 3,
+    Sum = 4,
+    Product = 5,
+    Prefix = 6,
+    Call = 7,
+}
+
 
 impl<'a> Parser<'a> {
     pub fn new(mut lexer: Lexer<'a>) -> Parser<'a> {
@@ -53,6 +67,33 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_expression_statement(&mut self) -> Node<'a> {
+        let _init_token = self.cur_token.clone();
+
+        let _expr = self.parse_expression(Precedence::Lowest);
+        while self.peek_token == Token::SEMICOLON {
+            self.next_token();
+        }
+
+        unimplemented!()
+    }
+
+    pub fn parse_expression(&mut self, _precedent: Precedence) -> Node<'a> {
+        return self.prefix_parse(self.cur_token.clone());
+    }
+
+    pub fn parse_integer_literal(&mut self) -> Node<'a> {
+        match self.cur_token {
+            Token::INT(i) => {
+                Node::IntegerLiteral {
+                    token: self.cur_token.clone(),
+                    value: i,
+                }
+            }
+            _ => panic!(),
+        }
+    }
+
     pub fn parse_return_statement(&mut self) -> Node<'a> {
         let init_token = self.cur_token.clone();
 
@@ -93,8 +134,25 @@ impl<'a> Parser<'a> {
             name: Box::new(ident),
             value: unimplemented!(),
         }
+
     }
 
+
+    fn prefix_parse(&self, tok: Token<'a>) -> Node<'a> {
+        match tok {
+            Token::IDENT(value) => {
+                Node::Identifier {
+                    token: tok,
+                    value: value,
+                }
+            }
+            _ => unimplemented!(),
+        }
+    }
+
+    fn infix_parse(&self, tok: Token<'a>, expr: Node<'a>) -> Node<'a> {
+        unimplemented!()
+    }
     // func (p *Parser) ParseProgram() *ast.Program {
     // program := &ast.Program{}
     // program.Nodes = []ast.Node{}
