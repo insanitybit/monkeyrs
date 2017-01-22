@@ -1,5 +1,8 @@
 #![allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq)]
+
+// use parser::Precedence;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Token<'a> {
     ILLEGAL,
     EOF,
@@ -36,8 +39,25 @@ pub enum Token<'a> {
     WHILE,
     FOR,
     LOOP,
-    BOOL(bool),
+    TRUE,
+    FALSE,
     RETURN,
     IF,
     ELSE,
 }
+// impl<'a> Token<'a> {
+//     pub fn get_precedence(&self) -> Precedence {
+//         match *self {
+//             Token::EQ => Precedence::Equals,
+//             Token::NOT_EQ => Precedence::Equals,
+//             Token::GT => Precedence::LessGreater,
+//             Token::LT => Precedence::LessGreater,
+//             Token::PLUS => Precedence::Sum,
+//             Token::MINUS => Precedence::Sum,
+//             Token::SLASH => Precedence::Product,
+//             Token::ASTERISK => Precedence::Product,
+//             Token::LPAREN => Precedence::Call,
+//             _ => Precedence::Lowest,
+//         }
+//     }
+// }

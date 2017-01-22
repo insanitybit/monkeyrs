@@ -28,6 +28,12 @@ pub enum Node<'a> {
         operator: &'a str,
         right: Box<Node<'a>>,
     },
+    InfixExpression {
+        token: Token<'a>,
+        operator: &'a str,
+        left: Box<Node<'a>>,
+        right: Box<Node<'a>>,
+    },
 }
 
 
@@ -40,12 +46,13 @@ impl<'a> Node<'a> {
             Node::Expression { token: ref t, .. } => t.clone(),
             Node::IntegerLiteral { token: ref t, .. } => t.clone(),
             Node::PrefixExpression { token: ref t, .. } => t.clone(),
+            Node::InfixExpression { token: ref t, .. } => t.clone(),
             // _ => panic!("Expected a valid token"),
         }
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Program<'a> {
     pub statements: Vec<Node<'a>>,
 }
