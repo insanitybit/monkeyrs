@@ -1,14 +1,14 @@
-use std::mem::replace;
+// use std::mem::replace;
 
 use ast::*;
 use lexer::Lexer;
 use token::Token;
+use std::iter::Peekable;
 
 #[derive(Debug)]
 pub struct Parser<'a> {
-    lexer: Lexer<'a>,
-    cur_token: Token<'a>,
-    peek_token: Token<'a>,
+    token_iter: Peekable<Lexer<'a>>,
+    cur_token: Option<Token<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq ,PartialOrd)]
@@ -24,29 +24,33 @@ pub enum Precedence {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(mut lexer: Lexer<'a>) -> Parser<'a> {
-        let cur_token = lexer.next_token().unwrap();
-        let peek_token = lexer.next_token().unwrap();
+    pub fn new(lexer: Lexer<'a>) -> Parser<'a> {
+        let mut p = lexer.peekable();
+        let cur_token = p.next();
         Parser {
-            lexer: lexer,
+            token_iter: p,
             cur_token: cur_token,
-            peek_token: peek_token,
         }
     }
 
-    pub fn get_cur_token(&self) -> Token<'a> {
-        self.cur_token.clone()
+    pub fn get_cur_token(&self) -> Option<Token<'a>> {
+        self.cur_token
     }
 
-    pub fn next_token(&mut self) {
-        self.cur_token = replace(&mut self.peek_token, self.lexer.next_token().unwrap());
+    pub fn peek_token(&mut self) -> Option<Token<'a>> {
+        self.token_iter.peek().cloned()
+    }
+
+    pub fn next_token(&mut self) -> Option<Token<'a>> {
+        self.cur_token = self.peek_token();
+        self.token_iter.next()
     }
 
     pub fn parse_program(&mut self) -> Program {
         let mut program = Program::new();
 
         loop {
-            if let Token::EOF = self.cur_token {
+            if let None = self.get_cur_token() {
                 break;
             }
             let stmt = self.parse_statement();
@@ -59,19 +63,19 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_statement(&mut self) -> Node<'a> {
-        match self.cur_token {
-            Token::LET => self.parse_let_statement(),
-            Token::RETURN => self.parse_return_statement(),
+        match self.get_cur_token() {
+            Some(Token::LET) => self.parse_let_statement(),
+            Some(Token::RETURN) => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
         }
     }
 
     pub fn parse_expression_statement(&mut self) -> Node<'a> {
-        let _init_token = self.cur_token.clone();
+        // let _init_token = self.cur_token.clone();
 
         let expr = self.parse_expression(Precedence::Lowest);
 
-        if self.peek_token == Token::SEMICOLON {
+        if let Some(&Token::SEMICOLON) = self.token_iter.peek() {
             self.next_token();
         }
 
@@ -79,17 +83,25 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_expression(&mut self, precedence: Precedence) -> Node<'a> {
-        let tok = self.cur_token.clone();
+        let tok = self.get_cur_token().unwrap();
 
         let mut left_expr = self.prefix_parse(tok.clone())
                                 .expect(&format!("Failed to parse prefix for: {:#?}", tok));
 
         loop {
-            if Token::SEMICOLON == self.peek_token || precedence >= self.peek_precedence() {
-                break;
-            }
+            let peek_tok = self.token_iter.peek().cloned();
+            let peek_prec = self.peek_precedence();
+            let peek_tok = match peek_tok {
+                Some(tok @ Token::SEMICOLON) => {
+                    if precedence >= peek_prec {
+                        break;
+                    }
+                    tok
+                }
+                Some(tok) => tok,
+                _ => panic!("parse_expression panicked due to peek token being None"),
+            };
 
-            let peek_tok = self.peek_token.clone();
             left_expr = self.infix_parse(peek_tok, left_expr);
 
             self.next_token();
@@ -98,19 +110,19 @@ impl<'a> Parser<'a> {
         left_expr
     }
 
-    fn peek_precedence(&self) -> Precedence {
-        self.peek_token.get_precedence()
+    fn peek_precedence(&mut self) -> Precedence {
+        self.token_iter.peek().unwrap().get_precedence()
     }
 
     fn cur_precedence(&self) -> Precedence {
-        self.cur_token.get_precedence()
+        self.cur_token.unwrap().get_precedence()
     }
 
     pub fn parse_integer_literal(&mut self) -> Node<'a> {
         match self.cur_token {
-            Token::INT(i) => {
+            Some(Token::INT(i)) => {
                 Node::IntegerLiteral {
-                    token: self.cur_token.clone(),
+                    token: self.cur_token.unwrap(),
                     value: i,
                 }
             }
@@ -119,10 +131,10 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_return_statement(&mut self) -> Node<'a> {
-        let init_token = self.cur_token.clone();
+        let init_token = self.get_cur_token().take().unwrap();
 
         self.next_token();
-        println!("parse_return_statement {:?}", self.cur_token);
+        println!("parse_return_statement {:?}", self.get_cur_token());
         let value = self.parse_expression(Precedence::Lowest);
 
 
@@ -135,30 +147,30 @@ impl<'a> Parser<'a> {
     pub fn parse_let_statement(&mut self) -> Node<'a> {
         let init_token = self.cur_token.clone();
 
-        let ident = if let Token::IDENT(name) = self.peek_token {
+        let ident = if let Some(Token::IDENT(name)) = self.peek_token() {
             self.next_token();
             Node::Identifier {
-                token: self.cur_token.clone(),
+                token: self.cur_token.expect("Failed to get cur_token in parse_let_statement"),
                 value: name,
             }
         } else {
             panic!("Expected indentifier");
         };
 
-        assert!(Token::ASSIGN == self.peek_token,
-                format!("{:#?}", self.peek_token));
+        assert!(Some(Token::ASSIGN) == self.peek_token(),
+                format!("{:#?}", self.peek_token()));
 
         self.next_token();
 
         println!("parse let statement {:?}", self.cur_token);
         let value = self.parse_expression(Precedence::Lowest);
 
-        if let Token::SEMICOLON = self.peek_token {
+        if let Some(Token::SEMICOLON) = self.peek_token() {
             self.next_token();
         };
 
         Node::LetStatement {
-            token: init_token,
+            token: init_token.expect("init token is None"),
             name: Box::new(ident),
             value: Box::new(value),
         }
