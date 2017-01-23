@@ -9,7 +9,7 @@ pub enum Node<'a> {
     },
     ReturnStatement {
         token: Token<'a>,
-        value: Box<Node<'a>>,
+        value: Option<Box<Node<'a>>>,
     },
     Identifier {
         token: Token<'a>,
@@ -26,13 +26,13 @@ pub enum Node<'a> {
     PrefixExpression {
         token: Token<'a>,
         operator: &'a str,
-        right: Box<Node<'a>>,
+        right: Option<Box<Node<'a>>>,
     },
     InfixExpression {
         token: Token<'a>,
         operator: &'a str,
         left: Box<Node<'a>>,
-        right: Box<Node<'a>>,
+        right: Option<Box<Node<'a>>>,
     },
 }
 

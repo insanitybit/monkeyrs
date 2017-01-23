@@ -54,7 +54,10 @@ impl<'a> Parser<'a> {
                 break;
             }
             let stmt = self.parse_statement();
-            program.statements.push(stmt.clone());
+            if let Some(st) = stmt {
+                program.statements.push(st);
+            }
+
 
             self.next_token();
         }
@@ -62,15 +65,15 @@ impl<'a> Parser<'a> {
         program
     }
 
-    pub fn parse_statement(&mut self) -> Node<'a> {
+    pub fn parse_statement(&mut self) -> Option<Node<'a>> {
         match self.get_cur_token() {
-            Some(Token::LET) => self.parse_let_statement(),
-            Some(Token::RETURN) => self.parse_return_statement(),
+            Some(Token::LET) => Some(self.parse_let_statement()),
+            Some(Token::RETURN) => Some(self.parse_return_statement()),
             _ => self.parse_expression_statement(),
         }
     }
 
-    pub fn parse_expression_statement(&mut self) -> Node<'a> {
+    pub fn parse_expression_statement(&mut self) -> Option<Node<'a>> {
         // let _init_token = self.cur_token.clone();
 
         let expr = self.parse_expression(Precedence::Lowest);
@@ -82,36 +85,37 @@ impl<'a> Parser<'a> {
         expr
     }
 
-    pub fn parse_expression(&mut self, precedence: Precedence) -> Node<'a> {
-        let tok = self.get_cur_token().unwrap();
-
-        let mut left_expr = self.prefix_parse(tok.clone())
-                                .expect(&format!("Failed to parse prefix for: {:#?}", tok));
+    pub fn parse_expression(&mut self, precedence: Precedence) -> Option<Node<'a>> {
+        let tok = self.get_cur_token().expect("parse_expression get_cur_token");
+        println!("{:?}", tok);
+        let mut left_expr = match self.prefix_parse(tok) {
+            Some(le) => le,
+            None => return None,
+        };
 
         loop {
-            let peek_tok = self.token_iter.peek().cloned();
-            let peek_prec = self.peek_precedence();
-            let peek_tok = match peek_tok {
-                Some(tok @ Token::SEMICOLON) => {
-                    if precedence >= peek_prec {
-                        break;
-                    }
-                    tok
-                }
-                Some(tok) => tok,
-                _ => panic!("parse_expression panicked due to peek token being None"),
-            };
-
-            left_expr = self.infix_parse(peek_tok, left_expr);
-
+            let peek_tok = self.peek_token();
             self.next_token();
+            let peek_prec = self.peek_precedence();
+
+            if Some(Token::SEMICOLON) != peek_tok && precedence >= peek_prec {
+                break;
+            }
+
+            left_expr = match self.infix_parse(peek_tok.expect("peek_tok"), left_expr.clone()) {
+                Some(le) => {
+                    self.next_token();
+                    le
+                }
+                None => return Some(left_expr),
+            };
         }
 
-        left_expr
+        Some(left_expr)
     }
 
     fn peek_precedence(&mut self) -> Precedence {
-        self.token_iter.peek().unwrap().get_precedence()
+        self.token_iter.peek().map(Token::get_precedence).unwrap_or(Precedence::Lowest)
     }
 
     fn cur_precedence(&self) -> Precedence {
@@ -134,13 +138,13 @@ impl<'a> Parser<'a> {
         let init_token = self.get_cur_token().take().unwrap();
 
         self.next_token();
-        println!("parse_return_statement {:?}", self.get_cur_token());
+
         let value = self.parse_expression(Precedence::Lowest);
 
 
         Node::ReturnStatement {
             token: init_token,
-            value: Box::new(value),
+            value: value.map(Box::new),
         }
     }
 
@@ -159,20 +163,20 @@ impl<'a> Parser<'a> {
 
         assert!(Some(Token::ASSIGN) == self.peek_token(),
                 format!("{:#?}", self.peek_token()));
-
+        self.next_token();
         self.next_token();
 
-        println!("parse let statement {:?}", self.cur_token);
         let value = self.parse_expression(Precedence::Lowest);
 
         if let Some(Token::SEMICOLON) = self.peek_token() {
+            self.next_token();
             self.next_token();
         };
 
         Node::LetStatement {
             token: init_token.expect("init token is None"),
             name: Box::new(ident),
-            value: Box::new(value),
+            value: Box::new(value.expect("let statement with empty values")),
         }
 
     }
@@ -194,18 +198,18 @@ impl<'a> Parser<'a> {
             }
             Token::MINUS => Some(self.parse_prefix_expression(tok)),
             Token::BANG => Some(self.parse_prefix_expression(tok)),
+            // Token::PLUS => Some(self.parse_infix_expression(tok, expr: Node<'a>)),
             _ => None,
         }
     }
 
     fn parse_prefix_expression(&mut self, tok: Token<'a>) -> Node<'a> {
         self.next_token();
-        println!("parse_prefix_expression {:?}", tok);
         let right = self.parse_expression(Precedence::Prefix);
         Node::PrefixExpression {
             token: tok.clone(),
             operator: Parser::operator_from_tok(tok),
-            right: Box::new(right),
+            right: right.map(Box::new),
         }
     }
 
@@ -222,9 +226,17 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn infix_parse(&mut self, tok: Token<'a>, expr: Node<'a>) -> Node<'a> {
+    fn infix_parse(&mut self, tok: Token<'a>, expr: Node<'a>) -> Option<Node<'a>> {
         match tok {
-            t => self.parse_infix_expression(t, expr),
+            tok @ Token::PLUS |
+            tok @ Token::MINUS |
+            tok @ Token::SLASH |
+            tok @ Token::ASTERISK |
+            tok @ Token::EQ |
+            tok @ Token::NOT_EQ |
+            tok @ Token::LT |
+            tok @ Token::GT => Some(self.parse_infix_expression(tok, expr)),
+            _ => None,
         }
     }
 
@@ -234,10 +246,10 @@ impl<'a> Parser<'a> {
 
         let right = self.parse_expression(precedence);
         Node::InfixExpression {
-            token: tok.clone(),
+            token: tok,
             operator: Parser::operator_from_tok(tok),
             left: Box::new(expr),
-            right: Box::new(right),
+            right: right.map(Box::new),
         }
     }
 }
@@ -254,7 +266,7 @@ mod tests {
 
         let mut parser = Parser::new(lexer);
 
-        println!("{:?}", parser.parse_program());
+        println!("{:#?}", parser.parse_program());
 
     }
 }
