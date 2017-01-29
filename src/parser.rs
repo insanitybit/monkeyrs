@@ -69,6 +69,7 @@ impl<'a> Parser<'a> {
         match self.get_cur_token() {
             Some(Token::LET) => Some(self.parse_let_statement()),
             Some(Token::RETURN) => Some(self.parse_return_statement()),
+            Some(Token::LBRACE) => Some(self.parse_block_statement()),
             _ => self.parse_expression_statement(),
         }
     }
@@ -252,6 +253,24 @@ impl<'a> Parser<'a> {
             right: right.map(Box::new),
         }
     }
+
+    fn parse_block_statement(&mut self) -> Node<'a> {
+
+        self.next_token();
+
+        let mut statements = Vec::new();
+
+        while let Some(statement) = self.parse_statement() {
+            println!("token: {:#?}", self.cur_token);
+            statements.push(Box::new(statement));
+            self.next_token();
+        }
+
+        Node::BlockStatement {
+            token: Token::LBRACE,
+            statements: statements
+        }
+    }
 }
 
 #[cfg(test)]
@@ -261,12 +280,18 @@ mod tests {
     #[test]
     fn test_parser() {
         let input = "let negative_five = -5; return !negative_five; let y = 4 + 4;";
-
-        let mut lexer = Lexer::new(input);
-
+        let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
         println!("{:#?}", parser.parse_program());
+    }
 
+    #[test]
+    fn test_block_statement() {
+        let input = "{ let a = 4; let b = 5; };";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        println!("{:#?}", parser.parse_program());
     }
 }

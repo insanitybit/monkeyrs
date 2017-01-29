@@ -34,6 +34,10 @@ pub enum Node<'a> {
         left: Box<Node<'a>>,
         right: Option<Box<Node<'a>>>,
     },
+    BlockStatement {
+        token: Token<'a>,
+        statements: Vec<Box<Node<'a>>>
+    }
 }
 
 
@@ -47,6 +51,7 @@ impl<'a> Node<'a> {
             Node::IntegerLiteral { token: ref t, .. } => t.clone(),
             Node::PrefixExpression { token: ref t, .. } => t.clone(),
             Node::InfixExpression { token: ref t, .. } => t.clone(),
+            Node::BlockStatement { token: ref t, .. } => t.clone(),
             // _ => panic!("Expected a valid token"),
         }
     }
