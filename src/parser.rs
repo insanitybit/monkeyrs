@@ -158,7 +158,7 @@ impl<'a> Parser<'a> {
                 value: name,
             }
         } else {
-            panic!("Expected indentifier");
+            panic!("Expected identifier");
         };
 
         assert!(Some(Token::ASSIGN) == self.peek_token(),
