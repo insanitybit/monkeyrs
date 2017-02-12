@@ -340,7 +340,7 @@ Token::SEMICOLON,
 
         loop {
             let tok = lexer.next_token();
-            // println!("{:?}", tok);
+
             match tok {
                 Some(ILLEGAL) => panic!("Illegal token: {:#?}", tok),
                 Some(t) => {

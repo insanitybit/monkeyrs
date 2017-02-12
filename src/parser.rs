@@ -86,9 +86,83 @@ impl<'a> Parser<'a> {
         expr
     }
 
+    pub fn parse_function_literal(&mut self) -> Option<Node<'a>> {
+        let tok = self.next_token();
+
+        if let Some(Token::LPAREN) = self.peek_token() {
+            self.next_token();
+        } else {
+            return None;
+        }
+
+        let params = self.parse_function_parameters();
+
+        if let Some(Token::LBRACE) = self.peek_token() {
+            self.next_token();
+        } else {
+            panic!("{:#?}", self.cur_token);
+            return None;
+        }
+
+        let fn_body = self.parse_block_statement();
+
+        Some(Node::FunctionLiteral {
+            token: tok.unwrap(),
+            parameters: params,
+            body: Box::new(fn_body),
+        })
+    }
+
+    pub fn parse_function_parameters(&mut self) -> Vec<Node<'a>> {
+        let mut identifiers = Vec::new();
+
+        if Some(Token::RPAREN) == self.peek_token() {
+            self.next_token();
+            return identifiers;
+        }
+
+        self.next_token();
+
+        match self.cur_token {
+            Some(Token::IDENT(name)) => {
+                identifiers.push(Node::Identifier {
+                    token: self.cur_token.expect("cur_token was none"),
+                    value: name,
+                });
+            },
+            _   => panic!("Expected identifier for function parameter!")
+        }
+
+        loop {
+            if let Some(Token::COMMA) = self.peek_token() {
+                self.next_token();
+                self.next_token();
+
+                match self.cur_token {
+                    Some(Token::IDENT(name)) => {
+                        identifiers.push(Node::Identifier {
+                            token: self.cur_token.expect("cur_token was none"),
+                            value: name,
+                        });
+                    },
+                    _    => panic!("Expected identifier for function parameter!")
+                }
+            } else {
+                break;
+            }
+        }
+
+        match self.peek_token() {
+         Some(Token::RPAREN) => {
+                self.next_token();
+                identifiers
+         },
+            _ => panic!("Unexpected token after function params")
+        }
+    }
+
     pub fn parse_expression(&mut self, precedence: Precedence) -> Option<Node<'a>> {
         let tok = self.get_cur_token().expect("parse_expression get_cur_token");
-        println!("{:?}", tok);
         let mut left_expr = match self.prefix_parse(tok) {
             Some(le) => le,
             None => return None,
@@ -199,6 +273,7 @@ impl<'a> Parser<'a> {
             }
             Token::MINUS => Some(self.parse_prefix_expression(tok)),
             Token::BANG => Some(self.parse_prefix_expression(tok)),
+            Token::FUNCTION => self.parse_function_literal(),
             // Token::PLUS => Some(self.parse_infix_expression(tok, expr: Node<'a>)),
             _ => None,
         }
@@ -261,7 +336,6 @@ impl<'a> Parser<'a> {
         let mut statements = Vec::new();
 
         while let Some(statement) = self.parse_statement() {
-            println!("token: {:#?}", self.cur_token);
             statements.push(Box::new(statement));
             self.next_token();
         }
@@ -283,12 +357,21 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        println!("{:#?}", parser.parse_program());
+        parser.parse_program();
     }
 
     #[test]
     fn test_block_statement() {
         let input = "{ let a = 4; let b = 5; };";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        parser.parse_program();
+    }
+
+    #[test]
+    fn test_fn_literal_statement() {
+        let input = "fn foo(bar, baz) {let x = 5; return x;}";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
