@@ -357,7 +357,64 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        parser.parse_program();
+        let expected = Program {
+            statements: vec![
+                Node::LetStatement {
+                    token: Token::LET,
+                    name: Box::new(Node::Identifier {
+                        token: Token::IDENT(
+                            "negative_five"
+                        ),
+                        value: "negative_five"
+                    }),
+                    value: Box::new(Node::PrefixExpression {
+                        token: Token::MINUS,
+                        operator: "MINUS",
+                        right: Some(
+                            Box::new(Node::IntegerLiteral {
+                                token: Token::INT(
+                                    5
+                                ),
+                                value: 5
+                            })
+                        )
+                    })
+                },
+                Node::PrefixExpression {
+                    token: Token::BANG,
+                    operator: "BANG",
+                    right: Some(
+                        Box::new(Node::Identifier {
+                            token: Token::IDENT(
+                                "negative_five"
+                            ),
+                            value: "negative_five"
+                        })
+                    )
+                },
+                Node::Identifier {
+                    token: Token::IDENT(
+                        "y"
+                    ),
+                    value: "y"
+                },
+                Node::IntegerLiteral {
+                    token: Token::INT(
+                        4
+                    ),
+                    value: 4
+                },
+                Node::IntegerLiteral {
+                    token: Token::INT(
+                        4
+                    ),
+                    value: 4
+                }
+            ]
+        };
+
+        assert_eq!(parser.parse_program(), expected, "AST differs");
+
     }
 
     #[test]
@@ -366,7 +423,47 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        parser.parse_program();
+        let expected = Program {
+            statements: vec![
+                Node::BlockStatement {
+                    token: Token::LBRACE,
+                    statements: vec![
+                        Box::new(Node::LetStatement {
+                            token: Token::LET,
+                            name: Box::new(Node::Identifier {
+                                token: Token::IDENT(
+                                    "a"
+                                ),
+                                value: "a"
+                            }),
+                            value: Box::new(Node::IntegerLiteral {
+                                token: Token::INT(
+                                    4
+                                ),
+                                value: 4
+                            })
+                        }),
+                        Box::new(Node::LetStatement {
+                            token: Token::LET,
+                            name: Box::new(Node::Identifier {
+                                token: Token::IDENT(
+                                    "b"
+                                ),
+                                value: "b"
+                            }),
+                            value: Box::new(Node::IntegerLiteral {
+                                token: Token::INT(
+                                    5
+                                ),
+                                value: 5
+                            })
+                        })
+                    ]
+                },
+            ]
+        };
+
+        assert_eq!(parser.parse_program(), expected, "AST differs");
     }
 
     #[test]
