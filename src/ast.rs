@@ -1,6 +1,6 @@
 use token::Token;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Node<'a> {
     LetStatement {
         token: Token<'a>,
@@ -57,7 +57,7 @@ impl<'a> Node<'a> {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq)]
 pub struct Program<'a> {
     pub statements: Vec<Node<'a>>,
 }
