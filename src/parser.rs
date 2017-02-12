@@ -98,7 +98,6 @@ impl<'a> Parser<'a> {
         if let Some(Token::LBRACE) = self.peek_token() {
             self.next_token();
         } else {
-            panic!("{:#?}", self.cur_token);
             return None;
         }
 
@@ -127,8 +126,8 @@ impl<'a> Parser<'a> {
                     token: self.cur_token.expect("cur_token was none"),
                     value: name,
                 });
-            },
-            _   => panic!("Expected identifier for function parameter!")
+            }
+            _ => panic!("Expected identifier for function parameter!"),
         }
 
         loop {
@@ -142,8 +141,8 @@ impl<'a> Parser<'a> {
                             token: self.cur_token.expect("cur_token was none"),
                             value: name,
                         });
-                    },
-                    _    => panic!("Expected identifier for function parameter!")
+                    }
+                    _ => panic!("Expected identifier for function parameter!"),
                 }
             } else {
                 break;
@@ -151,11 +150,11 @@ impl<'a> Parser<'a> {
         }
 
         match self.peek_token() {
-         Some(Token::RPAREN) => {
+            Some(Token::RPAREN) => {
                 self.next_token();
                 identifiers
-         },
-            _ => panic!("Unexpected token after function params")
+            }
+            _ => panic!("Unexpected token after function params"),
         }
     }
 
@@ -381,7 +380,7 @@ impl<'a> Parser<'a> {
 
         Node::BlockStatement {
             token: Token::LBRACE,
-            statements: statements
+            statements: statements,
         }
     }
 }
@@ -397,73 +396,51 @@ mod tests {
         let mut parser = Parser::new(lexer);
 
         let expected = Program {
-            statements: vec![
-                Node::LetStatement {
-                    token: Token::LET,
-                    name: Box::new(Node::Identifier {
-                        token: Token::IDENT(
-                            "negative_five"
-                        ),
-                        value: "negative_five"
-                    }),
-                    value: Box::new(Node::PrefixExpression {
-                        token: Token::MINUS,
-                        operator: "MINUS",
-                        right: Some(
-                            Box::new(Node::IntegerLiteral {
-                                token: Token::INT(
-                                    5
-                                ),
-                                value: 5
-                            })
-                        )
-                    })
-                },
-                Node::ReturnStatement {
-                    token: Token::RETURN,
-                    value: Some(
-                        Box::new(Node::PrefixExpression {
-                            token: Token::BANG,
-                            operator: "BANG",
-                            right: Some(
-                                Box::new(Node::Identifier {
-                                    token: Token::IDENT(
-                                        "negative_five"
-                                    ),
-                                    value: "negative_five"
-                                })
-                            )
-                        })
-                    )
-                },
-                Node::LetStatement {
-                    token: Token::LET,
-                    name: Box::new(Node::Identifier {
-                        token: Token::IDENT(
-                            "y"
-                        ),
-                        value: "y"
-                    }),
-                    value: Box::new(Node::InfixExpression {
-                        token: Token::PLUS,
-                        operator: "PLUS",
-                        left: Box::new(Node::IntegerLiteral {
-                            token: Token::INT(
-                                4
-                            ),
-                            value: 4
-                        }),
-                        right: Some(
-                            Box::new(Node::IntegerLiteral {
-                                token: Token::INT(
-                                    4
-                                ),
-                                value: 4
-                            })
-                        )
-                    })
-                }
-            ]
+            statements: vec![Node::LetStatement {
+                                 token: Token::LET,
+                                 name: Box::new(Node::Identifier {
+                                     token: Token::IDENT("negative_five"),
+                                     value: "negative_five",
+                                 }),
+                                 value: Box::new(Node::PrefixExpression {
+                                     token: Token::MINUS,
+                                     operator: "MINUS",
+                                     right: Some(Box::new(Node::IntegerLiteral {
+                                         token: Token::INT(5),
+                                         value: 5,
+                                     })),
+                                 }),
+                             },
+                             Node::ReturnStatement {
+                                 token: Token::RETURN,
+                                 value: Some(Box::new(Node::PrefixExpression {
+                                     token: Token::BANG,
+                                     operator: "BANG",
+                                     right: Some(Box::new(Node::Identifier {
+                                         token: Token::IDENT("negative_five"),
+                                         value: "negative_five",
+                                     })),
+                                 })),
+                             },
+                             Node::LetStatement {
+                                 token: Token::LET,
+                                 name: Box::new(Node::Identifier {
+                                     token: Token::IDENT("y"),
+                                     value: "y",
+                                 }),
+                                 value: Box::new(Node::InfixExpression {
+                                     token: Token::PLUS,
+                                     operator: "PLUS",
+                                     left: Box::new(Node::IntegerLiteral {
+                                         token: Token::INT(4),
+                                         value: 4,
+                                     }),
+                                     right: Some(Box::new(Node::IntegerLiteral {
+                                         token: Token::INT(4),
+                                         value: 4,
+                                     })),
+                                 }),
+                             }],
         };
 
         assert_eq!(parser.parse_program(), expected, "AST differs");
@@ -513,7 +490,7 @@ mod tests {
                         })
                     ]
                 },
-            ]
+            ],
         };
 
         assert_eq!(parser.parse_program(), expected, "AST differs");
@@ -526,58 +503,38 @@ mod tests {
         let mut parser = Parser::new(lexer);
 
         let expected = Program {
-            statements: vec![
-                Node::FunctionLiteral {
-                    token: Token::IDENT(
-                        "foo"
-                    ),
-                    parameters: vec![
-                        Node::Identifier {
-                            token: Token::IDENT(
-                                "bar"
-                            ),
-                            value: "bar"
-                        },
-                        Node::Identifier {
-                            token: Token::IDENT(
-                                "baz"
-                            ),
-                            value: "baz"
-                        }
-                    ],
-                    body: Box::new(Node::BlockStatement {
-                        token: Token::LBRACE,
-                        statements: vec![
-                            Box::new(Node::LetStatement {
-                                token: Token::LET,
-                                name: Box::new(Node::Identifier {
-                                    token: Token::IDENT(
-                                        "x"
-                                    ),
-                                    value: "x"
-                                }),
-                                value: Box::new(Node::IntegerLiteral {
-                                    token: Token::INT(
-                                        5
-                                    ),
-                                    value: 5
-                                })
-                            }),
-                            Box::new(Node::ReturnStatement {
-                                token: Token::RETURN,
-                                value: Some(
-                                    Box::new(Node::Identifier {
-                                        token: Token::IDENT(
-                                            "x"
-                                        ),
-                                        value: "x"
-                                    })
-                                )
-                            })
-                        ]
-                    })
-                }
-            ]
+            statements: vec![Node::FunctionLiteral {
+                                 token: Token::IDENT("foo"),
+                                 parameters: vec![Node::Identifier {
+                                                      token: Token::IDENT("bar"),
+                                                      value: "bar",
+                                                  },
+                                                  Node::Identifier {
+                                                      token: Token::IDENT("baz"),
+                                                      value: "baz",
+                                                  }],
+                                 body: Box::new(Node::BlockStatement {
+                                     token: Token::LBRACE,
+                                     statements: vec![Box::new(Node::LetStatement {
+                                                          token: Token::LET,
+                                                          name: Box::new(Node::Identifier {
+                                                              token: Token::IDENT("x"),
+                                                              value: "x",
+                                                          }),
+                                                          value: Box::new(Node::IntegerLiteral {
+                                                              token: Token::INT(5),
+                                                              value: 5,
+                                                          }),
+                                                      }),
+                                                      Box::new(Node::ReturnStatement {
+                                                          token: Token::RETURN,
+                                                          value: Some(Box::new(Node::Identifier {
+                                                              token: Token::IDENT("x"),
+                                                              value: "x",
+                                                          })),
+                                                      })],
+                                 }),
+                             }],
         };
 
         assert_eq!(parser.parse_program(), expected);
@@ -590,34 +547,72 @@ mod tests {
         let mut parser = Parser::new(lexer);
 
         let expected = Program {
-            statements: vec![
-                Node::CallExpression {
-                    token: Token::LPAREN,
-                    fn_name: Box::new(Node::Identifier {
-                        token: Token::IDENT(
-                            "foo"
-                        ),
-                        value: "foo"
-                    }),
-                    parameters: vec![
-                        Node::Identifier {
-                            token: Token::IDENT(
-                                "bar"
-                            ),
-                            value: "bar"
-                        },
-                        Node::Identifier {
-                            token: Token::IDENT(
-                                "baz"
-                            ),
-                            value: "baz"
-                        }
-                    ]
-                }
-            ]
+            statements: vec![Node::CallExpression {
+                                 token: Token::LPAREN,
+                                 fn_name: Box::new(Node::Identifier {
+                                     token: Token::IDENT("foo"),
+                                     value: "foo",
+                                 }),
+                                 parameters: vec![Node::Identifier {
+                                                      token: Token::IDENT("bar"),
+                                                      value: "bar",
+                                                  },
+                                                  Node::Identifier {
+                                                      token: Token::IDENT("baz"),
+                                                      value: "baz",
+                                                  }],
+                             }],
         };
 
 
         assert_eq!(parser.parse_program(), expected);
-}
+    }
+
+    #[test]
+    fn test_double_infix_expression() {
+        let input = "let a = 5 + 4 * 3 + 2;";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let expected = Program {
+            statements: vec![
+                Node::LetStatement {
+                    token: Token::LET,
+                    name: Box::new(Node::Identifier {
+                        token: Token::IDENT(
+                            "a"
+                        ),
+                        value: "a"
+                    }),
+                    value: Box::new(Node::InfixExpression {
+                        token: Token::PLUS,
+                        operator: "PLUS",
+                        left: Box::new(Node::IntegerLiteral {
+                            token: Token::INT(5),
+                            value: 5
+                        }),
+                        right: Some(Box::new(Node::InfixExpression {
+                            token: Token::ASTERISK,
+                            operator: "ASTERISK",
+                            left: Box::new(Node::IntegerLiteral {
+                                token: Token::INT(4),
+                                value: 4
+                            }),
+                            right: Some(Box::new(Node::IntegerLiteral {
+                                token: Token::INT(3),
+                                value: 3
+                            }))
+                        }))
+                    }),
+                },
+            ],
+        };
+
+        let actual = parser.parse_program();
+
+        // println!("{:#?}", expected);
+//        println!("{:#?}", actual);
+
+         assert_eq!(actual, expected, "AST differs");
+    }
 }

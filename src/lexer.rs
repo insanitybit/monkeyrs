@@ -32,7 +32,6 @@ impl<'a> Lexer<'a> {
     pub fn next_token<'b>(&mut self) -> Option<Token<'b>>
         where 'a: 'b
     {
-
         self.skip_whitespace();
         if let Some(tok) = self.read_char() {
             match tok {
@@ -119,6 +118,7 @@ impl<'a> Lexer<'a> {
 
     fn read_number(&mut self) -> u64 {
         let position = self.position;
+
         while let Some(c) = self.peek_char() {
             if c.is_digit(10) {
                 self.read_char();
@@ -126,10 +126,11 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
+
         self.input[position - 1..self.position]
             .parse::<u64>()
             .expect(&format!("Failed to parse number {}",
-                             &self.input[position - 1..self.position + 1]))
+                             &self.input[position - 1..self.position]))
     }
 }
 
