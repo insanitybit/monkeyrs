@@ -352,11 +352,12 @@ impl<'a> Parser<'a> {
         arguments.push(arg.unwrap());
 
         loop {
-            if let Some(Token::COMMA) = self.get_cur_token() {
+            if let Some(Token::COMMA) = self.peek_token() {
                 self.next_token();
+                self.next_token();
+
                 let arg = self.parse_expression(Precedence::Lowest);
                 arguments.push(arg.unwrap());
-
             } else {
                 break;
             }
@@ -418,41 +419,54 @@ mod tests {
                         )
                     })
                 },
-                Node::PrefixExpression {
-                    token: Token::BANG,
-                    operator: "BANG",
-                    right: Some(
-                        Box::new(Node::Identifier {
-                            token: Token::IDENT(
-                                "negative_five"
-                            ),
-                            value: "negative_five"
+                Node::ReturnStatement {
+                    token: Token::RETURN,
+                    value: Some(
+                        Box::new(Node::PrefixExpression {
+                            token: Token::BANG,
+                            operator: "BANG",
+                            right: Some(
+                                Box::new(Node::Identifier {
+                                    token: Token::IDENT(
+                                        "negative_five"
+                                    ),
+                                    value: "negative_five"
+                                })
+                            )
                         })
                     )
                 },
-                Node::Identifier {
-                    token: Token::IDENT(
-                        "y"
-                    ),
-                    value: "y"
-                },
-                Node::IntegerLiteral {
-                    token: Token::INT(
-                        4
-                    ),
-                    value: 4
-                },
-                Node::IntegerLiteral {
-                    token: Token::INT(
-                        4
-                    ),
-                    value: 4
+                Node::LetStatement {
+                    token: Token::LET,
+                    name: Box::new(Node::Identifier {
+                        token: Token::IDENT(
+                            "y"
+                        ),
+                        value: "y"
+                    }),
+                    value: Box::new(Node::InfixExpression {
+                        token: Token::PLUS,
+                        operator: "PLUS",
+                        left: Box::new(Node::IntegerLiteral {
+                            token: Token::INT(
+                                4
+                            ),
+                            value: 4
+                        }),
+                        right: Some(
+                            Box::new(Node::IntegerLiteral {
+                                token: Token::INT(
+                                    4
+                                ),
+                                value: 4
+                            })
+                        )
+                    })
                 }
             ]
         };
 
-        println!("{:#?}", parser.parse_program());
-//        assert_eq!(parser.parse_program(), expected, "AST differs");
+        assert_eq!(parser.parse_program(), expected, "AST differs");
 
     }
 
@@ -511,7 +525,62 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        parser.parse_program();
+        let expected = Program {
+            statements: vec![
+                Node::FunctionLiteral {
+                    token: Token::IDENT(
+                        "foo"
+                    ),
+                    parameters: vec![
+                        Node::Identifier {
+                            token: Token::IDENT(
+                                "bar"
+                            ),
+                            value: "bar"
+                        },
+                        Node::Identifier {
+                            token: Token::IDENT(
+                                "baz"
+                            ),
+                            value: "baz"
+                        }
+                    ],
+                    body: Box::new(Node::BlockStatement {
+                        token: Token::LBRACE,
+                        statements: vec![
+                            Box::new(Node::LetStatement {
+                                token: Token::LET,
+                                name: Box::new(Node::Identifier {
+                                    token: Token::IDENT(
+                                        "x"
+                                    ),
+                                    value: "x"
+                                }),
+                                value: Box::new(Node::IntegerLiteral {
+                                    token: Token::INT(
+                                        5
+                                    ),
+                                    value: 5
+                                })
+                            }),
+                            Box::new(Node::ReturnStatement {
+                                token: Token::RETURN,
+                                value: Some(
+                                    Box::new(Node::Identifier {
+                                        token: Token::IDENT(
+                                            "x"
+                                        ),
+                                        value: "x"
+                                    })
+                                )
+                            })
+                        ]
+                    })
+                }
+            ]
+        };
+
+        assert_eq!(parser.parse_program(), expected);
     }
 
     #[test]
@@ -520,6 +589,35 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-//        println!("{:#?}", parser.parse_program());
-    }
+        let expected = Program {
+            statements: vec![
+                Node::CallExpression {
+                    token: Token::LPAREN,
+                    fn_name: Box::new(Node::Identifier {
+                        token: Token::IDENT(
+                            "foo"
+                        ),
+                        value: "foo"
+                    }),
+                    parameters: vec![
+                        Node::Identifier {
+                            token: Token::IDENT(
+                                "bar"
+                            ),
+                            value: "bar"
+                        },
+                        Node::Identifier {
+                            token: Token::IDENT(
+                                "baz"
+                            ),
+                            value: "baz"
+                        }
+                    ]
+                }
+            ]
+        };
+
+
+        assert_eq!(parser.parse_program(), expected);
+}
 }
