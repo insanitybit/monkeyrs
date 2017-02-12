@@ -43,6 +43,11 @@ pub enum Node<'a> {
         parameters: Vec<Node<'a>>,
         body: Box<Node<'a>>,
     },
+    CallExpression {
+        token: Token<'a>,
+        fn_name: Box<Node<'a>>,
+        parameters: Vec<Node<'a>>,
+    },
 }
 
 
@@ -58,6 +63,7 @@ impl<'a> Node<'a> {
             Node::InfixExpression { token: t, .. } => t,
             Node::BlockStatement { token: t, .. } => t,
             Node::FunctionLiteral { token: t, .. } => t,
+            Node::CallExpression { token: t, .. } => t,
             // _ => panic!("Expected a valid token"),
         }
     }
