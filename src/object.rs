@@ -13,7 +13,7 @@ pub trait Object: Debug {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Integer {
-    pub value: u64
+    pub value: i64
 }
 
 impl Object for Integer {

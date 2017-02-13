@@ -21,7 +21,7 @@ pub enum Node<'a> {
     },
     IntegerLiteral {
         token: Token<'a>,
-        value: u64,
+        value: i64,
     },
     Boolean {
         token: Token<'a>,

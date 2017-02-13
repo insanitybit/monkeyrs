@@ -116,7 +116,7 @@ impl<'a> Lexer<'a> {
         ch.is_alphabetic() || ch == '_'
     }
 
-    fn read_number(&mut self) -> u64 {
+    fn read_number(&mut self) -> i64 {
         let position = self.position;
 
         while let Some(c) = self.peek_char() {
@@ -128,7 +128,7 @@ impl<'a> Lexer<'a> {
         }
 
         self.input[position - 1..self.position]
-            .parse::<u64>()
+            .parse::<i64>()
             .expect(&format!("Failed to parse number {}",
                              &self.input[position - 1..self.position]))
     }

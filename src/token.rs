@@ -9,7 +9,7 @@ pub enum Token<'a> {
 
     // Identifiers + literals
     IDENT(&'a str),
-    INT(u64),
+    INT(i64),
     STRING(&'a str),
 
     // Operators
