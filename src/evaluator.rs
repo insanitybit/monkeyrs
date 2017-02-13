@@ -5,11 +5,10 @@ use ast::*;
 
 pub fn eval<'a>(node: &Node<'a>) -> Option<Box<Object>> {
     match *node {
-        Node::IntegerLiteral{ref value, ..} => {
-            Some(Box::new(Integer{value: *value}))
-        },
-        ref node @ Node::Expression {..} => eval(node),
-        _ => None
+        Node::IntegerLiteral { ref value, .. } => Some(Box::new(Integer { value: *value })),
+//        Node::Boolean { ref value, .. } => Some(Box::new(Integer { value: *value })),
+        ref node @ Node::Expression { .. } => eval(node),
+        _ => None,
     }
 }
 
