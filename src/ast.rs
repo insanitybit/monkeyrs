@@ -23,6 +23,10 @@ pub enum Node<'a> {
         token: Token<'a>,
         value: u64,
     },
+    Boolean {
+        token: Token<'a>,
+        value: bool,
+    },
     PrefixExpression {
         token: Token<'a>,
         operator: &'a str,
@@ -64,6 +68,7 @@ impl<'a> Node<'a> {
             Node::BlockStatement { token: t, .. } => t,
             Node::FunctionLiteral { token: t, .. } => t,
             Node::CallExpression { token: t, .. } => t,
+            Node::Boolean { token: t, .. } => t,
             // _ => panic!("Expected a valid token"),
         }
     }

@@ -270,6 +270,18 @@ impl<'a> Parser<'a> {
                     value: i,
                 })
             }
+            Token::TRUE => {
+                Some(Node::Boolean {
+                    token: tok,
+                    value: true,
+                })
+            }
+            Token::FALSE => {
+                Some(Node::Boolean {
+                    token: tok,
+                    value: false,
+                })
+            }
             Token::MINUS => Some(self.parse_prefix_expression(tok)),
             Token::BANG => Some(self.parse_prefix_expression(tok)),
             Token::FUNCTION => self.parse_function_literal(),
@@ -619,5 +631,24 @@ mod tests {
 
 
         assert_eq!(parser.parse_program(), expected);
-}
+    }
+
+    #[test]
+    fn test_bool() {
+        let input = "true";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let expected = Program {
+            statements: vec![
+                Node::Boolean {
+                    token: Token::TRUE,
+                    value: true,
+                }
+            ]
+        };
+
+
+        assert_eq!(parser.parse_program(), expected);
+    }
 }
