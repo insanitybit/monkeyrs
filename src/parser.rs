@@ -284,8 +284,34 @@ impl<'a> Parser<'a> {
             Token::MINUS => Some(self.parse_prefix_expression(tok)),
             Token::BANG => Some(self.parse_prefix_expression(tok)),
             Token::FUNCTION => self.parse_function_literal(),
+            Token::IF   => Some(self.parse_if_statement()),
             // Token::PLUS => Some(self.parse_infix_expression(tok, expr: Node<'a>)),
             _ => None,
+        }
+    }
+
+    fn parse_if_statement(&mut self) -> Node<'a> {
+        let token = self.cur_token.unwrap();
+
+        self.next_token();
+        self.next_token();
+
+        let condition = Box::new(self.parse_expression(Precedence::Lowest).expect("if condition failed"));
+
+        self.next_token();
+
+        let consequence = Box::new(self.parse_block_statement());
+
+        self.next_token();
+        self.next_token();
+
+        let alternative = Box::new(self.parse_block_statement());
+
+        Node::IfExpression {
+            token,
+            condition,
+            consequence,
+            alternative
         }
     }
 
@@ -308,6 +334,8 @@ impl<'a> Parser<'a> {
             Token::BANG => "BANG",
             Token::ASTERISK => "ASTERISK",
             Token::SLASH => "SLASH",
+            Token::EQ => "EQ",
+            Token::NOT_EQ => "NOT_EQ",
             _ => panic!("Unexpected operator"),
         }
     }

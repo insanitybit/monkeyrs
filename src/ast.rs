@@ -19,6 +19,12 @@ pub enum Node<'a> {
         token: Token<'a>,
         value: Box<Node<'a>>,
     },
+    IfExpression {
+        token: Token<'a>,
+        condition: Box<Node<'a>>,
+        consequence: Box<Node<'a>>,
+        alternative: Box<Node<'a>>,
+    },
     IntegerLiteral {
         token: Token<'a>,
         value: i64,
@@ -62,6 +68,7 @@ impl<'a> Node<'a> {
             Node::ReturnStatement { token: t, .. } => t,
             Node::Identifier { token: t, .. } => t,
             Node::Expression { token: t, .. } => t,
+            Node::IfExpression { token: t, .. } => t,
             Node::IntegerLiteral { token: t, .. } => t,
             Node::PrefixExpression { token: t, .. } => t,
             Node::InfixExpression { token: t, .. } => t,
